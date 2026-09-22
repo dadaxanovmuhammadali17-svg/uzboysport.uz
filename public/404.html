@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script>
+    // GitHub Pages SPA redirect hack
+    // Foydalanuvchi /contact kabi URL ga kirsa,
+    // 404.html ochiladi va biz uni index.html ga yo'naltiramiz
+    var path = window.location.pathname;
+    var query = window.location.search;
+    var hash = window.location.hash;
+    // ?p=/contact&q=... formatida saqlab, index.html ga o'tamiz
+    var redirect = window.location.origin + '/?p=' + encodeURIComponent(path + query) + hash;
+    window.location.replace(redirect);
+  </script>
+</head>
+<body></body>
+</html>

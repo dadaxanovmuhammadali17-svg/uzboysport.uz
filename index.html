@@ -13,6 +13,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+    <!-- GitHub Pages SPA routing fix -->
+    <script>
+      (function() {
+        var params = new URLSearchParams(window.location.search);
+        var p = params.get('p');
+        if (p) {
+          // ?p=/contact -> /contact sahifasiga yo'naltirish
+          var newUrl = p + (window.location.hash || '');
+          window.history.replaceState(null, null, newUrl);
+        }
+      })();
+    </script>
+
   </head>
   <body>
     <div id="root"></div>

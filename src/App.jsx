@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { 
   Trophy, ShoppingCart, Heart, Search, Star, Trash2, User, Check, 
-  Phone, Mail, ArrowLeft, ArrowRight, Grid, List, Moon, Sun, Filter, 
+  Phone, Mail, ArrowLeft, ArrowRight, Grid, List, Filter, 
   MapPin, Clock, ShieldCheck, Truck, RefreshCw, Send, ChevronRight, X
 } from 'lucide-react'
 import { products as initialProducts } from './data/products'
@@ -34,12 +34,6 @@ function App() {
     return saved ? JSON.parse(saved) : []
   })
   
-  // Dark mode state - persisted in localStorage
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('uzboy_dark')
-    return saved ? JSON.parse(saved) === 'true' : true // Default to dark mode for premium feel
-  })
-
   // Toast notifications state
   const [toasts, setToasts] = useState([])
 
@@ -112,10 +106,6 @@ function App() {
   }, [wishlist])
 
   useEffect(() => {
-    localStorage.setItem('uzboy_dark', String(darkMode))
-  }, [darkMode])
-
-  useEffect(() => {
     localStorage.setItem('uzboy_products', JSON.stringify(products))
   }, [products])
 
@@ -125,13 +115,13 @@ function App() {
 
   // --- ROUTING ENGINE ---
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash || '#home'
+    const handleRouteChange = () => {
+      const path = window.location.pathname || '/home'
       setMobileMenuOpen(false)
       setShowSearchDropdown(false)
       
-      if (hash.startsWith('#product/')) {
-        const id = parseInt(hash.replace('#product/', ''), 10)
+      if (path.startsWith('/product/')) {
+        const id = parseInt(path.replace('/product/', ''), 10)
         const found = products.find(p => p.id === id)
         if (found) {
           setRoute({ page: 'product-detail', productId: id })
@@ -140,19 +130,20 @@ function App() {
           setSelectedColor(found.colors[0] || '')
           setDetailActiveImage(found.image)
         } else {
-          window.location.hash = '#home'
+          history.replaceState(null, '', '/home')
+          setRoute({ page: 'home', productId: null })
         }
       } else {
-        const page = hash.replace('#', '')
-        setRoute({ page: page || 'home', productId: null })
+        const page = path.replace('/', '') || 'home'
+        setRoute({ page, productId: null })
       }
       window.scrollTo({ top: 0, behavior: 'smooth' })
     };
     
-    window.addEventListener('hashchange', handleHashChange)
-    handleHashChange() // Initial route load
+    window.addEventListener('popstate', handleRouteChange)
+    handleRouteChange() // Initial route load
     
-    return () => window.removeEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('popstate', handleRouteChange)
   }, [products])
 
   // Close search dropdown on click outside
@@ -195,10 +186,11 @@ function App() {
 
   const navigateTo = (page, productId = null) => {
     if (page === 'product-detail' && productId) {
-      window.location.hash = `#product/${productId}`
+      history.pushState(null, '', `/product/${productId}`)
     } else {
-      window.location.hash = `#${page}`
+      history.pushState(null, '', `/${page}`)
     }
+    window.dispatchEvent(new PopStateEvent('popstate'))
   }
 
   const toggleWishlist = (id, e) => {
@@ -593,14 +585,14 @@ function App() {
   }
 
   return (
-    <div id="root" className={darkMode ? 'dark' : ''}>
+    <div id="root">
       
       {/* --- HEADER --- */}
       <header className="main-header">
         <div className="container header-container">
           
           {/* Logo */}
-          <a href="#home" className="logo-link" onClick={() => navigateTo('home')}>
+          <a href="/home" className="logo-link" onClick={(e) => { e.preventDefault(); navigateTo('home') }}>
             <Trophy className="logo-icon" size={28} color="var(--primary)" />
             UZ<span>BOY</span>
           </a>
@@ -608,16 +600,17 @@ function App() {
           {/* Navigation Menu */}
           <nav className={`nav-menu ${mobileMenuOpen ? 'mobile-open' : ''}`}>
             <a 
-              href="#home" 
+              href="/home" 
               className={`nav-link ${route.page === 'home' ? 'active' : ''}`}
-              onClick={() => navigateTo('home')}
+              onClick={(e) => { e.preventDefault(); navigateTo('home') }}
             >
               Bosh sahifa
             </a>
             <a 
-              href="#products" 
+              href="/products" 
               className={`nav-link ${route.page === 'products' ? 'active' : ''}`}
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault()
                 setSelectedShopCategory('all')
                 navigateTo('products')
               }}
@@ -625,16 +618,16 @@ function App() {
               Mahsulotlar
             </a>
             <a 
-              href="#about" 
+              href="/about" 
               className={`nav-link ${route.page === 'about' ? 'active' : ''}`}
-              onClick={() => navigateTo('about')}
+              onClick={(e) => { e.preventDefault(); navigateTo('about') }}
             >
               Biz haqimizda
             </a>
             <a 
-              href="#contact" 
+              href="/contact" 
               className={`nav-link ${route.page === 'contact' ? 'active' : ''}`}
-              onClick={() => navigateTo('contact')}
+              onClick={(e) => { e.preventDefault(); navigateTo('contact') }}
             >
               Aloqa
             </a>
@@ -693,15 +686,6 @@ function App() {
                 </div>
               )}
             </div>
-
-            {/* Dark Mode toggle */}
-            <button 
-              className="header-btn" 
-              onClick={() => setDarkMode(!darkMode)}
-              title={darkMode ? "Yorug' mavzu" : "Qorong'u mavzu"}
-            >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
 
             {/* Wishlist Button */}
             <button 
@@ -1554,7 +1538,7 @@ function App() {
                   </button>
 
                   <div style={{ textAlign: 'center', marginTop: '16px' }}>
-                    <a href="#products" className="nav-link" onClick={() => navigateTo('products')} style={{ fontSize: '13px' }}>
+                    <a href="/products" className="nav-link" onClick={(e) => { e.preventDefault(); navigateTo('products') }} style={{ fontSize: '13px' }}>
                       Xaridni davom ettirish
                     </a>
                   </div>
@@ -2518,10 +2502,10 @@ function App() {
                 Professional sport kiyimlari, poyabzallari va jihozlarining O'zbekistondagi eng yirik onlayn do'koni. Biz sizning g'alabangiz uchun xizmat qilamiz!
               </p>
               <div className="footer-socials">
-                <a href="#facebook" className="footer-social-btn">F</a>
-                <a href="#telegram" className="footer-social-btn">T</a>
-                <a href="#instagram" className="footer-social-btn">I</a>
-                <a href="#youtube" className="footer-social-btn">Y</a>
+                <a href="https://facebook.com" target="_blank" rel="noreferrer" className="footer-social-btn">F</a>
+                <a href="https://t.me" target="_blank" rel="noreferrer" className="footer-social-btn">T</a>
+                <a href="https://instagram.com" target="_blank" rel="noreferrer" className="footer-social-btn">I</a>
+                <a href="https://youtube.com" target="_blank" rel="noreferrer" className="footer-social-btn">Y</a>
               </div>
             </div>
 
@@ -2529,10 +2513,10 @@ function App() {
             <div>
               <h4 className="footer-col-title">Tezkor havolalar</h4>
               <ul className="footer-links">
-                <li><a href="#home" onClick={() => navigateTo('home')}>Bosh sahifa</a></li>
-                <li><a href="#products" onClick={() => navigateTo('products')}>Barcha mahsulotlar</a></li>
-                <li><a href="#about" onClick={() => navigateTo('about')}>Biz haqimizda</a></li>
-                <li><a href="#contact" onClick={() => navigateTo('contact')}>Aloqa va manzillar</a></li>
+                <li><a href="/home" onClick={(e) => { e.preventDefault(); navigateTo('home') }}>Bosh sahifa</a></li>
+                <li><a href="/products" onClick={(e) => { e.preventDefault(); navigateTo('products') }}>Barcha mahsulotlar</a></li>
+                <li><a href="/about" onClick={(e) => { e.preventDefault(); navigateTo('about') }}>Biz haqimizda</a></li>
+                <li><a href="/contact" onClick={(e) => { e.preventDefault(); navigateTo('contact') }}>Aloqa va manzillar</a></li>
               </ul>
             </div>
 
@@ -2540,10 +2524,10 @@ function App() {
             <div>
               <h4 className="footer-col-title">Kategoriyalar</h4>
               <ul className="footer-links">
-                <li><a href="#products" onClick={() => { setSelectedShopCategory('football'); navigateTo('products'); }}>Futbol</a></li>
-                <li><a href="#products" onClick={() => { setSelectedShopCategory('running'); navigateTo('products'); }}>Yugurish</a></li>
-                <li><a href="#products" onClick={() => { setSelectedShopCategory('fitness'); navigateTo('products'); }}>Fitness va Zal</a></li>
-                <li><a href="#products" onClick={() => { setSelectedShopCategory('basketball'); navigateTo('products'); }}>Basketbol</a></li>
+                <li><a href="/products" onClick={(e) => { e.preventDefault(); setSelectedShopCategory('football'); navigateTo('products'); }}>Futbol</a></li>
+                <li><a href="/products" onClick={(e) => { e.preventDefault(); setSelectedShopCategory('running'); navigateTo('products'); }}>Yugurish</a></li>
+                <li><a href="/products" onClick={(e) => { e.preventDefault(); setSelectedShopCategory('fitness'); navigateTo('products'); }}>Fitness va Zal</a></li>
+                <li><a href="/products" onClick={(e) => { e.preventDefault(); setSelectedShopCategory('basketball'); navigateTo('products'); }}>Basketbol</a></li>
               </ul>
             </div>
 
@@ -2569,8 +2553,8 @@ function App() {
           <div className="footer-bottom">
             <p>&copy; {new Date().getFullYear()} UzBoy. Barcha huquqlar himoyalangan.</p>
             <div style={{ display: 'flex', gap: '16px' }}>
-              <a href="#privacy" style={{ hover: 'color: white' }}>Maxfiylik siyosati</a>
-              <a href="#terms">Foydalanish shartlari</a>
+              <a href="/privacy" onClick={(e) => e.preventDefault()} style={{ hover: 'color: white' }}>Maxfiylik siyosati</a>
+              <a href="/terms" onClick={(e) => e.preventDefault()}>Foydalanish shartlari</a>
             </div>
           </div>
 
